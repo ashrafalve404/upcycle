@@ -1,4 +1,6 @@
-import { Navbar, Hero, HowItWorks, FeaturedProducts, BecomeDesigner, Footer } from '@/components/layout';
+import { Navbar, Hero, HowItWorks, TestimonialsCarousel, FeaturedProducts, BecomeDesigner, Footer } from '@/components/layout';
+
+export const dynamic = 'force-dynamic';
 
 export default function HomePage() {
   return (
@@ -7,6 +9,7 @@ export default function HomePage() {
       <main>
         <Hero />
         <HowItWorks />
+        <TestimonialsCarousel />
         <FeaturedProducts />
         <BecomeDesigner />
       </main>

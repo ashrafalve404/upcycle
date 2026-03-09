@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
 
 const sidebarLinks = [
   {
@@ -58,10 +60,30 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-gray-900 border-b sticky top-0 z-50">
+      {/* Mobile Header */}
+      <header className="bg-gray-900 border-b sticky top-0 z-50 lg:hidden">
+        <div className="flex items-center justify-between px-4 h-14">
+          <button 
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 -ml-2 text-white"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <Link href="/" className="text-xl font-bold text-white">
+            UpCycle <span className="text-gray-400">Admin</span>
+          </Link>
+          <div className="w-10" />
+        </div>
+      </header>
+
+      {/* Desktop Header */}
+      <header className="bg-gray-900 border-b sticky top-0 z-50 hidden lg:block">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold text-white">
             UpCycle <span className="text-gray-400">Admin</span>
@@ -75,32 +97,59 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex gap-8">
-          <aside className="w-64 flex-shrink-0">
-            <nav className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
-              <ul className="space-y-1">
-                {sidebarLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className={cn(
-                        'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                        pathname === link.href
-                          ? 'bg-gray-900 text-white'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      )}
-                    >
-                      {link.icon}
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+      <div className="container mx-auto px-4 py-4 lg:py-8">
+        <div className="flex gap-4 lg:gap-8">
+          {/* Mobile Sidebar Overlay */}
+          {sidebarOpen && (
+            <div 
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Sidebar */}
+          <aside className={`
+            fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white transform transition-transform duration-200 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+            lg:w-64 flex-shrink-0
+          `}>
+            <div className="h-full flex flex-col">
+              {/* Mobile Header */}
+              <div className="flex items-center justify-between p-4 border-b lg:hidden">
+                <span className="font-semibold">Menu</span>
+                <button onClick={() => setSidebarOpen(false)} className="p-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <nav className="flex-1 overflow-y-auto p-4 lg:p-4">
+                <ul className="space-y-1">
+                  {sidebarLinks.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
+                          pathname === link.href
+                            ? 'bg-gray-900 text-white'
+                            : 'text-gray-600 hover:bg-gray-100'
+                        )}
+                      >
+                        {link.icon}
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
           </aside>
 
-          <main className="flex-1">{children}</main>
+          {/* Main Content */}
+          <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
     </div>
