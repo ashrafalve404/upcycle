@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { registerSchema, RegisterFormData, Input, FormField, FormButton } from '@/components/ui/form';
 import { authService } from '@/services/authService';
+import { useAuthStore } from '@/store/authStore';
 import {
   Select,
   SelectContent,
@@ -20,6 +21,7 @@ export function RegisterForm() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const setAuth = useAuthStore((state) => state.setAuth);
   
   const {
     register,
@@ -50,13 +52,9 @@ export function RegisterForm() {
         last_name: data.lastName,
         account_type: data.accountType,
       });
+      setAuth(result.user, result.tokens);
       setSuccess('Registration successful! Redirecting...');
-      
-      if (result.user.account_type === 'designer') {
-        router.push('/designer-dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {

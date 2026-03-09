@@ -7,12 +7,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { loginSchema, LoginFormData, Input, FormField, FormButton } from '@/components/ui/form';
 import { authService } from '@/services/authService';
+import { useAuthStore } from '@/store/authStore';
 
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const setAuth = useAuthStore((state) => state.setAuth);
   
   const {
     register,
@@ -29,15 +31,9 @@ export function LoginForm() {
     
     try {
       const result = await authService.login(data);
+      setAuth(result.user, result.tokens);
       setSuccess('Login successful! Redirecting...');
-      
-      if (result.user.account_type === 'admin') {
-        router.push('/admin');
-      } else if (result.user.account_type === 'designer') {
-        router.push('/designer-dashboard');
-      } else {
-        router.push('/dashboard');
-      }
+      router.push('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password');
     } finally {
