@@ -1,16 +1,19 @@
 export interface User {
-  id: number;
+  id: string;
   email: string;
   username: string;
   first_name: string;
   last_name: string;
-  avatar?: string;
-  role: 'buyer' | 'seller' | 'designer' | 'admin';
-  date_joined: string;
+  avatar?: string | null;
+  bio?: string | null;
+  account_type: 'user' | 'designer' | 'admin';
+  role?: 'buyer' | 'seller' | 'designer' | 'admin';
+  created_at?: string;
+  date_joined?: string;
 }
 
 export interface Product {
-  id: number;
+  id: string;
   title: string;
   description: string;
   price: number;
@@ -24,7 +27,7 @@ export interface Product {
 }
 
 export interface DesignRequest {
-  id: number;
+  id: string;
   title: string;
   description: string;
   item_images: string[];
@@ -38,7 +41,7 @@ export interface DesignRequest {
 }
 
 export interface Category {
-  id: number;
+  id: string;
   name: string;
   slug: string;
   image?: string;
@@ -60,6 +63,7 @@ export interface PaginatedResponse<T> {
 export interface AuthTokens {
   access: string;
   refresh: string;
+  expires_in?: number;
 }
 
 export interface LoginCredentials {
@@ -71,4 +75,5 @@ export interface RegisterData extends LoginCredentials {
   username: string;
   first_name: string;
   last_name: string;
+  account_type: 'user' | 'designer';
 }

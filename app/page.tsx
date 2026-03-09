@@ -1,7 +1,16 @@
+import { Navbar, Hero, HowItWorks, FeaturedProducts, BecomeDesigner, Footer } from '@/components/layout';
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-4xl font-bold">Welcome to UpCycle</h1>
+    <div className="min-h-screen">
+      <Navbar />
+      <main>
+        <Hero />
+        <HowItWorks />
+        <FeaturedProducts />
+        <BecomeDesigner />
+      </main>
+      <Footer />
     </div>
   );
 }
