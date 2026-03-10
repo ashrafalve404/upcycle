@@ -28,7 +28,7 @@ export default function AboutPage() {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">Join Our Community</h2>
             <p className="text-gray-600 mb-4">
-              Whether you have items to sell or have a talent for upcycling, there's a place for you in our community.
+              Whether you have items to sell or have a talent for upcycling, there is a place for you in our community.
             </p>
             <div className="flex gap-4">
               <Link href="/register" className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">

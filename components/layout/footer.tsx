@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 const footerLinks = {
   marketplace: [
@@ -62,8 +63,15 @@ export function Footer() {
       <div className="container mx-auto px-4 py-16">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
           <div className="col-span-2">
-            <Link href="/" className="text-2xl font-bold text-white">
-              UpCycle
+            <Link href="/" className="flex items-center gap-2">
+              <Image 
+                src="/Upcycle_symbol.svg" 
+                alt="UpCycle" 
+                width={36} 
+                height={36}
+                className="w-9 h-9"
+              />
+              <span className="text-2xl font-bold text-white">UpCycle</span>
             </Link>
             <p className="mt-4 text-sm text-gray-400 max-w-xs">
               The marketplace for buying, selling, and upcycling pre-loved products. 

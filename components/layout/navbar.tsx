@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
@@ -28,6 +29,13 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-md dark:border-gray-700">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
+          <Image 
+            src="/Upcycle_symbol.svg" 
+            alt="UpCycle" 
+            width={36} 
+            height={36}
+            className="w-8 h-8 md:w-9 md:h-9"
+          />
           <span className="text-xl md:text-2xl font-bold text-emerald-600">UpCycle</span>
         </Link>
         

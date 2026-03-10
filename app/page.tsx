@@ -1,4 +1,4 @@
-import { Navbar, Hero, HowItWorks, TestimonialsCarousel, FeaturedProducts, BecomeDesigner, Footer } from '@/components/layout';
+import { Navbar, Hero, PartnersBanner, HowItWorks, TestimonialsCarousel, FeaturedProducts, BecomeDesigner, Footer } from '@/components/layout';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +8,7 @@ export default function HomePage() {
       <Navbar />
       <main>
         <Hero />
+        <PartnersBanner />
         <HowItWorks />
         <TestimonialsCarousel />
         <FeaturedProducts />
