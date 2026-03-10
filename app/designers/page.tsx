@@ -43,7 +43,7 @@ export default function DesignersPage() {
             />
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {filteredDesigners.map((designer) => (
               <Card key={designer.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-6 text-center">
