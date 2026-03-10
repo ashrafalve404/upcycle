@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { use } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar, Footer } from '@/components/layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { productService } from '@/services/productService';
 import { Product } from '@/services/api/types';
 import { formatPrice } from '@/lib/utils';
+import { useAuthStore } from '@/store/authStore';
+import { useToast } from '@/hooks/use-toast';
 
 const conditionLabels: Record<string, string> = {
   new: 'New',
@@ -31,9 +34,16 @@ const locationMap: Record<string, string> = {
 
 export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { addToast } = useToast();
+  
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [offerAmount, setOfferAmount] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     loadProduct();
@@ -49,6 +59,91 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      addToast({
+        title: 'Please login',
+        description: 'You need to login to purchase items',
+        variant: 'warning',
+      });
+      router.push('/login');
+      return;
+    }
+
+    if (user?.account_type === 'designer' || user?.account_type === 'admin') {
+      addToast({
+        title: 'Cannot purchase',
+        description: 'Only buyers can purchase items',
+        variant: 'error',
+      });
+      return;
+    }
+
+    addToast({
+      title: 'Order placed!',
+      description: `Your order for ${product?.title} has been placed successfully.`,
+      variant: 'success',
+    });
+  };
+
+  const handleMakeOffer = () => {
+    if (!isAuthenticated) {
+      addToast({
+        title: 'Please login',
+        description: 'You need to login to make an offer',
+        variant: 'warning',
+      });
+      router.push('/login');
+      return;
+    }
+
+    if (user?.account_type === 'designer' || user?.account_type === 'admin') {
+      addToast({
+        title: 'Cannot make offer',
+        description: 'Only buyers can make offers',
+        variant: 'error',
+      });
+      return;
+    }
+
+    setShowOfferDialog(true);
+  };
+
+  const handleSubmitOffer = async () => {
+    const offer = parseFloat(offerAmount);
+    
+    if (isNaN(offer) || offer <= 0) {
+      addToast({
+        title: 'Invalid amount',
+        description: 'Please enter a valid offer amount',
+        variant: 'error',
+      });
+      return;
+    }
+
+    if (product && offer > product.price * 1.5) {
+      addToast({
+        title: 'Offer too high',
+        description: 'Your offer cannot exceed 150% of the asking price',
+        variant: 'warning',
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setShowOfferDialog(false);
+      setOfferAmount('');
+      addToast({
+        title: 'Offer submitted!',
+        description: `Your offer of ${formatPrice(offer)} has been sent to the seller.`,
+        variant: 'success',
+      });
+    }, 1000);
   };
 
   if (isLoading) {
@@ -83,6 +178,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   }
 
   const location = locationMap[product.seller.id] || 'Online';
+  const isOwnProduct = user?.id === product.seller.id;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -144,13 +240,28 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </div>
 
               <div className="flex gap-3">
-                <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-lg py-6">
+                <Button 
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-lg py-6"
+                  onClick={handleBuyNow}
+                  disabled={isOwnProduct}
+                >
                   Buy Now
                 </Button>
-                <Button variant="outline" className="flex-1 text-lg py-6 border-emerald-600 text-emerald-600 hover:bg-emerald-50">
+                <Button 
+                  variant="outline" 
+                  className="flex-1 text-lg py-6 border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                  onClick={handleMakeOffer}
+                  disabled={isOwnProduct}
+                >
                   Make Offer
                 </Button>
               </div>
+
+              {isOwnProduct && (
+                <p className="text-sm text-orange-600 text-center">
+                  This is your listing
+                </p>
+              )}
 
               <Card>
                 <CardContent className="p-6">
@@ -187,6 +298,47 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         </div>
       </main>
       <Footer />
+
+      {/* Make Offer Dialog */}
+      <Dialog open={showOfferDialog} onOpenChange={setShowOfferDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Make an Offer</DialogTitle>
+            <DialogDescription>
+              Enter your offer amount for {product.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Your Offer ({formatPrice(product.price)} asking price)
+            </label>
+            <input
+              type="number"
+              value={offerAmount}
+              onChange={(e) => setOfferAmount(e.target.value)}
+              placeholder="Enter amount"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              min="1"
+              step="0.01"
+            />
+            <p className="text-xs text-gray-500 mt-2">
+              Suggested: {formatPrice(product.price * 0.8)} - {formatPrice(product.price)}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowOfferDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitOffer}
+              disabled={isSubmitting || !offerAmount}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Offer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

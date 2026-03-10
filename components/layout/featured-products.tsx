@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -44,12 +44,6 @@ const featuredProducts = [
 ];
 
 export function FeaturedProducts() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <section className="py-20 bg-gray-50 overflow-hidden">
       <div className="container mx-auto px-4">

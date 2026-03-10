@@ -1,7 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+function useHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
 
 const testimonials = [
   {
@@ -35,24 +43,20 @@ const testimonials = [
 ];
 
 export function TestimonialsCarousel() {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useHydrated();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
+    if (!isHydrated) return;
     
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [mounted]);
+  }, [isHydrated]);
 
-  if (!mounted) return null;
+  if (!isHydrated) return null;
 
   return (
     <section className="py-16 bg-gradient-to-b from-white via-gray-50 to-white overflow-hidden">

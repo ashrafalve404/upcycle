@@ -144,7 +144,7 @@ export default function NewDesignRequestPage() {
 
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="text-sm text-gray-600">
-                    <strong>Tip:</strong> Include details about preferred styles, colors, and any specific materials you'd like the designer to use.
+                    <strong>Tip:</strong> Include details about preferred styles, colors, and any specific materials you would like the designer to use.
                   </p>
                 </div>
 

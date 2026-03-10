@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 const partners = [
   { name: 'EcoTech Solutions' },
@@ -13,14 +13,18 @@ const partners = [
   { name: 'ReCreate Global' },
 ];
 
+function useHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
+
 export function PartnersBanner() {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useHydrated();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
+  if (!isHydrated) return null;
 
   return (
     <section className="py-10 bg-white dark:bg-gray-900 border-y border-gray-100 dark:border-gray-800 overflow-hidden">

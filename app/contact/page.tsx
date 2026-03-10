@@ -23,7 +23,7 @@ export default function ContactPage() {
         <div className="bg-emerald-600 text-white py-16">
           <div className="container mx-auto px-4">
             <h1 className="text-4xl font-bold">Contact Us</h1>
-            <p className="mt-4 text-emerald-100">We'd love to hear from you</p>
+            <p className="mt-4 text-emerald-100">We would love to hear from you</p>
           </div>
         </div>
         <div className="container mx-auto px-4 py-12 max-w-xl">
@@ -31,7 +31,7 @@ export default function ContactPage() {
             <div className="bg-white rounded-lg p-8 shadow-md text-center">
               <div className="text-emerald-600 text-5xl mb-4">✓</div>
               <h2 className="text-2xl font-bold text-gray-900">Thank You!</h2>
-              <p className="text-gray-600 mt-2">Your message has been sent. We'll get back to you soon.</p>
+              <p className="text-gray-600 mt-2">Your message has been sent. We will get back to you soon.</p>
               <Link href="/" className="inline-block mt-6 text-emerald-600 hover:text-emerald-700">
                 Back to Home →
               </Link>

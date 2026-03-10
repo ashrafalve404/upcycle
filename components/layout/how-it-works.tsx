@@ -1,7 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const isServer = typeof window === 'undefined';
+
+function useHydrated() {
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+}
 
 const steps = [
   {
@@ -37,20 +47,16 @@ const steps = [
 ];
 
 export function HowItWorks() {
-  const [mounted, setMounted] = useState(false);
+  const isHydrated = useHydrated();
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
+    if (!isHydrated) return;
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % steps.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, [mounted]);
+  }, [isHydrated]);
 
   const goToSlide = (index: number) => {
     setActiveIndex(index);
@@ -64,7 +70,7 @@ export function HowItWorks() {
     setActiveIndex((prev) => (prev - 1 + steps.length) % steps.length);
   };
 
-  if (!mounted) return null;
+  if (!isHydrated) return null;
 
   return (
     <section className="py-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
