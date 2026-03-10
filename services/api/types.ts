@@ -21,6 +21,7 @@ export interface Product {
   category: string;
   condition: 'new' | 'like_new' | 'good' | 'fair' | 'poor';
   seller: User;
+  designer?: User;
   status: 'available' | 'sold' | 'pending';
   created_at: string;
   updated_at: string;

@@ -18,6 +18,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // Force light mode - ignore system preference
+                localStorage.setItem('theme', 'light');
+                document.documentElement.classList.remove('dark');
+                document.documentElement.classList.add('light');
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={cn("font-sans", geist.variable)} suppressHydrationWarning>
         <Providers>
           {children}

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { upcycleRequestService } from '@/services/dashboardService';
 
 export default function NewDesignRequestPage() {
@@ -23,6 +24,7 @@ export default function NewDesignRequestPage() {
     budgetMax: '',
     transformation: '',
   });
+  const [itemImages, setItemImages] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +36,7 @@ export default function NewDesignRequestPage() {
       await upcycleRequestService.createRequest({
         title: formData.title,
         description: formData.description,
-        item_images: ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'],
+        item_images: itemImages.length > 0 ? itemImages : ['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800'],
         budget_min: Number(formData.budgetMin),
         budget_max: Number(formData.budgetMax),
         desired_transformation: formData.transformation,
@@ -100,6 +102,17 @@ export default function NewDesignRequestPage() {
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Upload Images of Your Item</Label>
+                  <p className="text-sm text-gray-500">Upload photos of the item you want to be upcycled (up to 5 images)</p>
+                  <ImageUpload
+                    value={itemImages}
+                    onChange={setItemImages}
+                    maxImages={5}
+                    className="mt-2"
                   />
                 </div>
 

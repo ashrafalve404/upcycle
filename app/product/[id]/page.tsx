@@ -42,8 +42,22 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [selectedImage, setSelectedImage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showOfferDialog, setShowOfferDialog] = useState(false);
+  const [showDeliveryDialog, setShowDeliveryDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'stripe' | 'cash'>('stripe');
   const [offerAmount, setOfferAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Delivery information state
+  const [deliveryInfo, setDeliveryInfo] = useState({
+    fullName: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phone: '',
+  });
 
   useEffect(() => {
     loadProduct();
@@ -81,11 +95,89 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       return;
     }
 
-    addToast({
-      title: 'Order placed!',
-      description: `Your order for ${product?.title} has been placed successfully.`,
-      variant: 'success',
-    });
+    // Show delivery information dialog
+    setShowDeliveryDialog(true);
+  };
+
+  const handleDeliverySubmit = () => {
+    // Validate delivery information
+    if (!deliveryInfo.fullName || !deliveryInfo.email || !deliveryInfo.address || !deliveryInfo.city || 
+        !deliveryInfo.state || !deliveryInfo.zipCode || !deliveryInfo.phone) {
+      addToast({
+        title: 'Missing information',
+        description: 'Please fill in all delivery information fields',
+        variant: 'error',
+      });
+      return;
+    }
+
+    // Close delivery dialog and show payment method selection
+    setShowDeliveryDialog(false);
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentSubmit = async () => {
+    setIsSubmitting(true);
+
+    if (selectedPaymentMethod === 'stripe') {
+      // Process with Stripe
+      try {
+        const response = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            productId: product?.id,
+            productTitle: product?.title,
+            productPrice: product?.price,
+            productImage: product?.images?.[0],
+            deliveryInfo,
+            userId: user?.id,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error('Failed to get checkout URL');
+        }
+      } catch (error) {
+        console.error('Checkout error:', error);
+        setIsSubmitting(false);
+        addToast({
+          title: 'Payment Error',
+          description: 'Failed to initiate payment. Please try again.',
+          variant: 'error',
+        });
+      }
+    } else {
+      // Cash on Delivery - simulate order processing
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setShowPaymentDialog(false);
+        setDeliveryInfo({
+          fullName: '',
+          email: '',
+          address: '',
+          city: '',
+          state: '',
+          zipCode: '',
+          phone: '',
+        });
+        addToast({
+          title: 'Order Placed!',
+          description: `Your order for ${product?.title} has been placed. You will pay ${formatPrice(product?.price || 0)} in cash upon delivery.`,
+          variant: 'success',
+        });
+      }, 1500);
+    }
   };
 
   const handleMakeOffer = () => {
@@ -270,11 +362,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                 </CardContent>
               </Card>
 
+              {/* Seller Section */}
               <Card>
                 <CardContent className="p-6">
                   <h3 className="font-semibold text-gray-900 mb-4">Seller</h3>
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-semibold text-lg">
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-lg">
                       {product.seller.first_name[0]}{product.seller.last_name[0]}
                     </div>
                     <div>
@@ -284,11 +377,36 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                       <p className="text-sm text-gray-500">{location}</p>
                     </div>
                   </div>
-                  <Button variant="outline" className="w-full mt-4 border-emerald-600 text-emerald-600 hover:bg-emerald-50">
-                    View Profile
+                  <Button variant="outline" className="w-full mt-4 border-gray-300 text-gray-700 hover:bg-gray-50">
+                    View Seller Profile
                   </Button>
                 </CardContent>
               </Card>
+
+              {/* Designer Section */}
+              {product.designer && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4">Designer</h3>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-semibold text-lg">
+                        {product.designer.first_name[0]}{product.designer.last_name[0]}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {product.designer.first_name} {product.designer.last_name}
+                        </p>
+                        <p className="text-sm text-gray-500">{product.designer.account_type === 'designer' ? 'Upcycling Designer' : 'Designer'}</p>
+                      </div>
+                    </div>
+                    <Link href={`/designers/${product.designer.id}`}>
+                      <Button variant="outline" className="w-full mt-4 border-emerald-600 text-emerald-600 hover:bg-emerald-50">
+                        View Designer Profile
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="text-sm text-gray-500">
                 <p>Posted on {new Date(product.created_at).toLocaleDateString()}</p>
@@ -305,12 +423,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <DialogHeader>
             <DialogTitle>Make an Offer</DialogTitle>
             <DialogDescription>
-              Enter your offer amount for {product.title}
+              Enter your offer amount for {product?.title}
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Your Offer ({formatPrice(product.price)} asking price)
+              Your Offer ({formatPrice(product?.price || 0)} asking price)
             </label>
             <input
               type="number"
@@ -322,7 +440,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               step="0.01"
             />
             <p className="text-xs text-gray-500 mt-2">
-              Suggested: {formatPrice(product.price * 0.8)} - {formatPrice(product.price)}
+              Suggested: {formatPrice((product?.price || 0) * 0.8)} - {formatPrice(product?.price || 0)}
             </p>
           </div>
           <DialogFooter>
@@ -335,6 +453,257 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               className="bg-emerald-600 hover:bg-emerald-700"
             >
               {isSubmitting ? 'Submitting...' : 'Submit Offer'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delivery Information Dialog */}
+      <Dialog open={showDeliveryDialog} onOpenChange={setShowDeliveryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delivery Information</DialogTitle>
+            <DialogDescription>
+              Please provide your delivery details to complete the purchase of {product?.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={deliveryInfo.fullName}
+                onChange={(e) => setDeliveryInfo({ ...deliveryInfo, fullName: e.target.value })}
+                placeholder="John Doe"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="email"
+                value={deliveryInfo.email}
+                onChange={(e) => setDeliveryInfo({ ...deliveryInfo, email: e.target.value })}
+                placeholder="john@example.com"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Address <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={deliveryInfo.address}
+                onChange={(e) => setDeliveryInfo({ ...deliveryInfo, address: e.target.value })}
+                placeholder="123 Main Street, Apt 4"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  City <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={deliveryInfo.city}
+                  onChange={(e) => setDeliveryInfo({ ...deliveryInfo, city: e.target.value })}
+                  placeholder="New York"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  State <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={deliveryInfo.state}
+                  onChange={(e) => setDeliveryInfo({ ...deliveryInfo, state: e.target.value })}
+                  placeholder="NY"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ZIP Code <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={deliveryInfo.zipCode}
+                  onChange={(e) => setDeliveryInfo({ ...deliveryInfo, zipCode: e.target.value })}
+                  placeholder="10001"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={deliveryInfo.phone}
+                  onChange={(e) => setDeliveryInfo({ ...deliveryInfo, phone: e.target.value })}
+                  placeholder="(555) 123-4567"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  required
+                />
+              </div>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Order Total</p>
+                  <p className="text-xs text-gray-500">Including shipping & taxes</p>
+                </div>
+                <p className="text-xl font-bold text-emerald-600">{formatPrice(product?.price || 0)}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeliveryDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleDeliverySubmit}
+              disabled={isSubmitting}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              Continue to Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Selection Dialog */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Select Payment Method</DialogTitle>
+            <DialogDescription>
+              Choose how you would like to pay for {product?.title}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {/* Stripe / Card Option */}
+            <label
+              className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                selectedPaymentMethod === 'stripe' 
+                  ? 'border-emerald-600 bg-emerald-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="stripe"
+                checked={selectedPaymentMethod === 'stripe'}
+                onChange={() => setSelectedPaymentMethod('stripe')}
+                className="sr-only"
+              />
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg mr-4">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Credit / Debit Card</p>
+                <p className="text-sm text-gray-500">Pay securely with Visa, Mastercard, etc.</p>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                selectedPaymentMethod === 'stripe' ? 'border-emerald-600' : 'border-gray-300'
+              }`}>
+                {selectedPaymentMethod === 'stripe' && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                )}
+              </div>
+            </label>
+
+            {/* Cash on Delivery Option */}
+            <label
+              className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                selectedPaymentMethod === 'cash' 
+                  ? 'border-emerald-600 bg-emerald-50' 
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="paymentMethod"
+                value="cash"
+                checked={selectedPaymentMethod === 'cash'}
+                onChange={() => setSelectedPaymentMethod('cash')}
+                className="sr-only"
+              />
+              <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg mr-4">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900">Cash on Delivery</p>
+                <p className="text-sm text-gray-500">Pay with cash when the product is delivered</p>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                selectedPaymentMethod === 'cash' ? 'border-emerald-600' : 'border-gray-300'
+              }`}>
+                {selectedPaymentMethod === 'cash' && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />
+                )}
+              </div>
+            </label>
+
+            {/* Order Summary */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Order Total</p>
+                  <p className="text-xs text-gray-500">
+                    {selectedPaymentMethod === 'cash' ? 'Pay upon delivery' : 'Secure payment'}
+                  </p>
+                </div>
+                <p className="text-xl font-bold text-emerald-600">{formatPrice(product?.price || 0)}</p>
+              </div>
+              <div className="text-xs text-gray-500 pt-2 border-t">
+                <p>Delivery to: {deliveryInfo.address}, {deliveryInfo.city}, {deliveryInfo.state} {deliveryInfo.zipCode}</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              Back
+            </Button>
+            <Button 
+              onClick={handlePaymentSubmit}
+              disabled={isSubmitting}
+              className="bg-emerald-600 hover:bg-emerald-700"
+            >
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  {selectedPaymentMethod === 'stripe' ? 'Pay with Card' : 'Confirm Order'}
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

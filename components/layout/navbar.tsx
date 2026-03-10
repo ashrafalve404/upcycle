@@ -56,6 +56,11 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           {isAuthenticated && user ? (
             <>
+              <Link href="/messages">
+                <Button variant="ghost" className="dark:text-gray-300">
+                  Messages
+                </Button>
+              </Link>
               <Link href={getDashboardLink()}>
                 <Button variant="ghost" className="dark:text-gray-300">
                   Dashboard

@@ -13,10 +13,12 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function getInitialTheme(): Theme {
+  // Always return 'light' to ignore system dark mode preference
+  // This ensures the website always appears in light mode regardless of system settings
   if (typeof window === 'undefined') return 'light';
   const stored = localStorage.getItem('theme') as Theme;
   if (stored) return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
@@ -32,7 +34,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    // Theme toggle disabled - always stay in light mode
+    // Uncomment below to re-enable theme toggle if needed
+    // setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   return (
